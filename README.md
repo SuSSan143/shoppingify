@@ -8,11 +8,11 @@
 
 <div align="center">
   <h3>
-    <a href="https://{your-demo-link.your-domain}">
+    <a href="https://shoppingify-teal.vercel.app/">
       Demo
     </a>
     <span> | </span>
-    <a href="https://{your-url-to-the-solution}">
+    <a href="https://github.com/SuSSan143/shoppingify">
       Solution
     </a>
     <span> | </span>
@@ -45,8 +45,8 @@
 
 - [Next JS](https://nextjs.org/)
 - [Typescript](https://www.typescriptlang.org/docs/)
-- [tRPC](https://www.trpc.io/)
-- [Prisma](https://www.prisma.io/docs/)
+- [tRPC](https://trpc.io/)
+- [Prisma](https://www.prisma.io/)
 - [NextAuth](https://next-auth.js.org/)
 - [Tailwind](https://tailwindcss.com/)
 
@@ -64,13 +64,13 @@ To clone and run this application, you'll need [Git](https://git-scm.com) and [N
 
 ```bash
 # Clone this repository
-$ git clone https://github.com/your-user-name/your-project-name
+$ git clone https://github.com/SuSSan143/shoppingify
 
 # Install dependencies
 $ npm install
 
 # Run the app
-$ npm dev
+$ npm run dev
 ```
 
 ## Acknowledgements
