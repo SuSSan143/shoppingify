@@ -1,13 +1,13 @@
 import { router } from "../trpc";
 import { authRouter } from "./auth";
-import { dataRouter } from "./data";
-import { selectedDataRouter } from "./selectedData";
+import { menuItemDataRouter } from "./menuItemsData";
+import { shoppingItemsDataRouter } from "./shoppingListItemsData";
 
 
 export const appRouter = router({
   auth: authRouter,
-  data: dataRouter,
-  selectedData: selectedDataRouter
+  menuItemData: menuItemDataRouter,
+  ShpooingListItemData: shoppingItemsDataRouter
 });
 
 // export type definition of API

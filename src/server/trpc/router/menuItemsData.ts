@@ -2,9 +2,9 @@ import { z } from "zod";
 
 import { router, publicProcedure } from "../trpc";
 
-export const dataRouter = router({
+export const menuItemDataRouter = router({
   getAllData: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.data.findMany();
+    return ctx.prisma.menuItemsList.findMany();
   }),
   getData: publicProcedure
     .input(
@@ -13,7 +13,7 @@ export const dataRouter = router({
       })
     )
     .query(({ ctx, input }) => {
-      return ctx.prisma.data.findUnique({
+      return ctx.prisma.menuItemsList.findUnique({
         where: {
           name: input.name,
         },
@@ -30,7 +30,7 @@ export const dataRouter = router({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.data.update({
+      return ctx.prisma.menuItemsList.update({
         where: {
           name: input.name,
         },
