@@ -2,11 +2,11 @@ import { z } from "zod";
 
 import { router, publicProcedure } from "../trpc";
 
-export const selectedDataRouter = router({
+export const shoppingItemsDataRouter = router({
   getAllData: publicProcedure.query(({ ctx }) => {
-    return ctx.prisma.selectedData.findMany();
+    return ctx.prisma.shoppingItemsList.findMany();
   }),
-  addItemToShopingList: publicProcedure
+  addItemToShoppingList: publicProcedure
     .input(
       z.object({
         id: z.string(),
@@ -15,7 +15,7 @@ export const selectedDataRouter = router({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.selectedData.update({
+      return ctx.prisma.shoppingItemsList.update({
         where: {
           name: input.name,
         },
@@ -38,7 +38,7 @@ export const selectedDataRouter = router({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.selectedData.update({
+      return ctx.prisma.shoppingItemsList.update({
         where: {
           name: input.name,
         },
@@ -65,7 +65,7 @@ export const selectedDataRouter = router({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.selectedData.update({
+      return ctx.prisma.shoppingItemsList.update({
         where: {
           name: input.name,
         },
@@ -83,7 +83,7 @@ export const selectedDataRouter = router({
         },
       });
     }),
-  removeItemFromShopingList: publicProcedure
+  removeItemFromShoppingList: publicProcedure
     .input(
       z.object({
         name: z.string(),
@@ -91,7 +91,7 @@ export const selectedDataRouter = router({
       })
     )
     .mutation(({ ctx, input }) => {
-      return ctx.prisma.selectedData.update({
+      return ctx.prisma.shoppingItemsList.update({
         where: {
           name: input.name,
         },

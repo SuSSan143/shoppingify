@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
@@ -20,8 +21,8 @@ import { IoMdArrowBack, IoIosArrowDown } from "react-icons/io";
 import { MdCancel, MdModeEditOutline, MdOutlineError } from "react-icons/md";
 
 import { DataContext } from "../../context/DataContext";
+
 import Overlay from "../common/Feedback/Overlay";
-import Image from "next/image";
 
 const spaceGrotesk = Space_Grotesk({
   weight: "500",
@@ -38,7 +39,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <>
-      <Overlay isShowing={false} />
+      <Overlay isActive={false} />
       <div className={`flex h-screen flex-row gap-0 ${spaceGrotesk.className}`}>
         <div className="flex min-h-full w-20 flex-col items-center justify-between bg-white py-6">
           <div className="rounded-full bg-[#3f3d56] p-3">
@@ -91,10 +92,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
         {children}
 
-        {dataContext?.currentSideBar === "default" && <DefaultItem />}
-        {(dataContext?.currentSideBar === "add" ||
-          dataContext?.currentSideBar === "edit") && <AddEditItem />}
-        {dataContext?.currentSideBar === "show" && <ShowItem />}
+        {dataContext?.currentSideBarStatus === "default" && <DefaultItem />}
+        {(dataContext?.currentSideBarStatus === "add" ||
+          dataContext?.currentSideBarStatus === "edit") && <AddEditItem />}
+        {dataContext?.currentSideBarStatus === "show" && <ShowItem />}
       </div>
     </>
   );
@@ -105,10 +106,24 @@ const DefaultItem = () => {
     null
   );
   const [isInEditMode, setIsInEditMode] = useState(false);
-  const incrementMutation = trpc.selectedData.doIncrement.useMutation();
-  const decrementMutation = trpc.selectedData.doDecrement.useMutation();
+  const utils = trpc.useContext();
+  const incrementMutation = trpc.ShpooingListItemData.doIncrement.useMutation({
+    onSuccess: () => {
+      utils.ShpooingListItemData.getAllData.invalidate();
+    },
+  });
+  const decrementMutation = trpc.ShpooingListItemData.doDecrement.useMutation({
+    onSuccess: () => {
+      utils.ShpooingListItemData.getAllData.invalidate();
+    },
+  });
   const deleteMutation =
-    trpc.selectedData.removeItemFromShopingList.useMutation();
+    trpc.ShpooingListItemData.removeItemFromShoppingList.useMutation({
+      onSuccess: () => {
+        utils.ShpooingListItemData.getAllData.invalidate();
+      },
+    });
+  const { data } = trpc.ShpooingListItemData.getAllData.useQuery();
 
   const dataContext = useContext(DataContext);
 
@@ -121,14 +136,14 @@ const DefaultItem = () => {
   };
 
   const handleInfoButtonClick = (item: string, name: string) => {
-    dataContext?.setEditItem({
+    dataContext?.setEditItemInfo({
       item,
       name,
     });
-    dataContext?.setCurrentSideBar("show");
+    dataContext?.setCurrentSideBarStatus("show");
   };
 
-  const handleInrementButtonClick = async (
+  const handleIncrementButtonClick = async (
     item: string,
     count: number,
     name: string
@@ -138,24 +153,6 @@ const DefaultItem = () => {
       count,
       name,
     });
-    const updatedData = dataContext?.data?.map((data) => {
-      if (data.name === name) {
-        return {
-          ...data,
-          items: data.items.map((itemData) => {
-            if (itemData.name === item) {
-              return {
-                ...itemData,
-                count: itemData.count + 1,
-              };
-            }
-            return itemData;
-          }),
-        };
-      }
-      return data;
-    });
-    dataContext?.setData(updatedData!);
   };
 
   const handleDecrementButtonClick = async (
@@ -180,28 +177,10 @@ const DefaultItem = () => {
       count,
       name,
     });
-    const updatedData = dataContext?.data?.map((data) => {
-      if (data.name === name) {
-        return {
-          ...data,
-          items: data.items.map((itemData) => {
-            if (itemData.name === item) {
-              return {
-                ...itemData,
-                count: itemData.count - 1,
-              };
-            }
-            return itemData;
-          }),
-        };
-      }
-      return data;
-    });
-    dataContext?.setData(updatedData!);
   };
 
   const removeItemFromShoppingList = async (item: string, name: string) => {
-    const updatedData = dataContext?.data?.map((data) => {
+    const updatedData = data?.map((data) => {
       if (data.name === name) {
         return {
           ...data,
@@ -214,18 +193,18 @@ const DefaultItem = () => {
       name,
       items: updatedData?.find((data) => data?.name === name)?.items!,
     });
-    dataContext?.setData(updatedData!);
   };
 
   return (
     <>
       <Overlay
-        isShowing={
+        isActive={
           incrementMutation.isLoading ||
           decrementMutation.isLoading ||
           deleteMutation.isLoading
         }
       />
+
       <div className="flex w-[20%] flex-col justify-between bg-white">
         <div className="flex h-full flex-col items-center gap-5 bg-[#fff0de] py-6 px-5">
           <div className="flex items-center justify-center gap-7 rounded-lg bg-[#80485b] px-6">
@@ -242,7 +221,7 @@ const DefaultItem = () => {
                 Didn`&apos;t find what you need?
               </span>
               <button
-                onClick={() => dataContext?.setCurrentSideBar("add")}
+                onClick={() => dataContext?.setCurrentSideBarStatus("add")}
                 className="w-fit rounded-xl bg-white px-4 py-2 text-[#80485b]"
               >
                 Add Item
@@ -264,7 +243,7 @@ const DefaultItem = () => {
 
           <div className="flex w-full flex-col gap-5">
             <div className="flex max-h-[440px] flex-col gap-4 overflow-y-auto px-1">
-              {dataContext?.data?.map((data) => (
+              {data?.map((data) => (
                 <div className="flex flex-col gap-2" key={data.id}>
                   <span className="text-[14px] text-slate-500">
                     {data.name}
@@ -272,7 +251,7 @@ const DefaultItem = () => {
                   <div className="flex flex-col gap-1">
                     {data?.items?.length === 0 && (
                       <span className="text-center text-red-500">
-                        No items found. Please select items from Menu
+                        No items found. Please select an item from Menu
                       </span>
                     )}
                     {data?.items.map((item, i: number) => (
@@ -328,7 +307,7 @@ const DefaultItem = () => {
                             {showFullButtonName === item.name && (
                               <button
                                 onClick={() =>
-                                  handleInrementButtonClick(
+                                  handleIncrementButtonClick(
                                     item.name,
                                     item.count,
                                     data.name
@@ -378,6 +357,8 @@ const DefaultItem = () => {
 
 const AddEditItem = () => {
   const dataContext = useContext(DataContext);
+  const utils = trpc.useContext()
+  const { data: selectedData } = trpc.ShpooingListItemData.getAllData.useQuery();
   const [input, setInput] = useState({
     name: "",
     desc: "",
@@ -385,27 +366,28 @@ const AddEditItem = () => {
     category: "",
   });
 
-  const categories = dataContext?.data?.map((data) => data.name);
+  const categories = selectedData?.map((data) => data.name);
 
-  const { data, isLoading } = trpc.data.getData.useQuery({
-    name: dataContext?.editItem.name!,
+  const { data, isLoading } = trpc.menuItemData.getData.useQuery({
+    name: dataContext?.editItemInfo.name!,
   });
-  const mutation = trpc.data.updateData.useMutation();
+  const mutation = trpc.menuItemData.updateData.useMutation();
 
   useEffect(() => {
-    if (dataContext?.currentSideBar === "edit") {
+    if (dataContext?.currentSideBarStatus === "edit") {
       const filteredData = data?.items.find(
         (item) =>
-          item.name.toLowerCase() === dataContext?.editItem.item.toLowerCase()
+          item.name.toLowerCase() ===
+          dataContext?.editItemInfo.item.toLowerCase()
       );
       setInput({
         name: filteredData?.name!,
         desc: filteredData?.description!,
         imageUrl: filteredData?.url!,
-        category: dataContext.editItem.name,
+        category: dataContext.editItemInfo.name,
       });
     }
-  }, [dataContext?.currentSideBar]);
+  }, [dataContext?.currentSideBarStatus]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -422,19 +404,20 @@ const AddEditItem = () => {
       name: input.category,
       url: input.imageUrl,
       item: input.name,
-      type: dataContext?.currentSideBar as "edit" | "add",
+      type: dataContext?.currentSideBarStatus as "edit" | "add",
     });
-    dataContext?.setEditItem({ name: input.category, item: input.name });
-    dataContext?.setCurrentSideBar("show");
+    await utils.menuItemData.getAllData.invalidate();
+    dataContext?.setEditItemInfo({ name: input.category, item: input.name });
+    dataContext?.setCurrentSideBarStatus("show");
   };
 
   return (
     <>
-      <Overlay isShowing={isLoading || mutation.isLoading} />
+      <Overlay isActive={isLoading || mutation.isLoading} />
       <div className="flex min-h-full w-[20%] flex-col justify-between gap-7 bg-white py-5 px-4">
         <div className="flex flex-col gap-5">
           <h3 className="text-2xl">
-            {dataContext?.currentSideBar === "edit"
+            {dataContext?.currentSideBarStatus === "edit"
               ? "Edit an item"
               : "Add a new item"}
           </h3>
@@ -508,7 +491,7 @@ const AddEditItem = () => {
 
         <div className="flex items-center justify-between">
           <button
-            onClick={() => dataContext?.setCurrentSideBar("default")}
+            onClick={() => dataContext?.setCurrentSideBarStatus("default")}
             className="rounded-lg px-5 py-3"
           >
             Cancel
@@ -528,18 +511,18 @@ const AddEditItem = () => {
 
 const ShowItem = () => {
   const dataContext = useContext(DataContext);
-  const { data, isLoading } = trpc.data.getData.useQuery({
-    name: dataContext?.editItem.name!,
+  const { data, isLoading } = trpc.menuItemData.getData.useQuery({
+    name: dataContext?.editItemInfo.name!,
   });
 
   const filteredData = data?.items.find(
     (item) =>
-      item.name.toLowerCase() === dataContext?.editItem.item.toLowerCase()
+      item.name.toLowerCase() === dataContext?.editItemInfo.item.toLowerCase()
   );
 
   return (
     <>
-      <Overlay isShowing={isLoading} />
+      <Overlay isActive={isLoading} />
       <div className="flex min-h-full w-[20%] flex-col justify-between gap-7 bg-white py-5 px-4">
         <div className="flex flex-col gap-5">
           <button className="flex items-center gap-2 text-[#f9a109]">
@@ -564,7 +547,7 @@ const ShowItem = () => {
 
             <div className="flex flex-col gap-1">
               <h6 className="text-gray-500">Category</h6>
-              <span className="text-lg">{dataContext?.editItem.name}</span>
+              <span className="text-lg">{dataContext?.editItemInfo.name}</span>
             </div>
 
             <div className="flex flex-col gap-1">
@@ -578,14 +561,14 @@ const ShowItem = () => {
 
         <div className="flex items-center justify-between">
           <button
-            onClick={() => dataContext?.setCurrentSideBar("default")}
+            onClick={() => dataContext?.setCurrentSideBarStatus("default")}
             className="rounded-lg px-5 py-3"
           >
             Back
           </button>
 
           <button
-            onClick={() => dataContext?.setCurrentSideBar("edit")}
+            onClick={() => dataContext?.setCurrentSideBarStatus("edit")}
             className="rounded-lg bg-[#f9a109] px-5 py-3 text-white"
           >
             Edit

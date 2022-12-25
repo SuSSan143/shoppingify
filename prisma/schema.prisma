@@ -14,27 +14,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-type Item {
+type MenuItem {
   name        String
   description String
   url         String
 }
 
-model Data {
+model MenuItemsList {
   id    String   @id @default(auto()) @map("_id") @db.ObjectId
   name  String   @unique
-  items Item[]
+  items MenuItem[]
 }
 
-type SelectedItem {
+type ShoppingItem {
   name  String
   count Int    @default(0)
 }
 
-model SelectedData {
+model ShoppingItemsList {
   id    String         @id @default(auto()) @map("_id") @db.ObjectId
   name  String         @unique
-  items SelectedItem[]
+  items ShoppingItem[]
 }
 
 // Necessary for Next auth

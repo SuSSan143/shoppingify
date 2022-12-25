@@ -4,7 +4,7 @@ import Head from "next/head";
 // import Link from "next/link";
 // import { signIn, signOut, useSession } from "next-auth/react";
 
-import { type Data, PrismaClient } from "@prisma/client";
+import { type MenuItemsList, PrismaClient } from "@prisma/client";
 
 import { Dancing_Script } from "@next/font/google";
 
@@ -18,9 +18,10 @@ import Overlay from "../components/common/Feedback/Overlay";
 
 import { trpc } from "../utils/trpc";
 import { DataContext } from "../context/DataContext";
+import Spinner from "../components/common/Feedback/Spinner";
 
 type HomePageProps = {
-  datas: Data[];
+  datas: MenuItemsList[];
 };
 
 const dancingScript = Dancing_Script({
@@ -32,7 +33,13 @@ const Home: NextPage<HomePageProps> = ({ datas }) => {
   const [filteringList, setFilteringList] = useState(datas);
   const [search, setSearch] = useState("");
   const dataContext = useContext(DataContext);
-  const mutation = trpc.selectedData.addItemToShopingList.useMutation();
+  const utils = trpc.useContext();
+  const { data: selectedData } = trpc.ShpooingListItemData.getAllData.useQuery();
+  const mutation = trpc.ShpooingListItemData.addItemToShoppingList.useMutation({
+    onSuccess: (data) => {
+      utils.ShpooingListItemData.getAllData.invalidate();
+    },
+  });
 
   const searchHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
@@ -47,7 +54,7 @@ const Home: NextPage<HomePageProps> = ({ datas }) => {
     setFilteringList(filteredList);
   };
 
-  const addItemToShopingList = async (
+  const addItemToShoppingList = async (
     item: string,
     name: string,
     id: string
@@ -55,30 +62,19 @@ const Home: NextPage<HomePageProps> = ({ datas }) => {
     if (mutation.error) {
       return alert("Something went wrong");
     }
-    const itemExist = dataContext?.data
-      .find((list) => list.name === name)
+    const itemExist = selectedData
+      ?.find((list) => list.name === name)
       ?.items.map((i) => i.name)
       .includes(item);
 
     if (!itemExist) {
-      const data = dataContext?.data.map((list) => {
-        if (
-          list.name === name &&
-          !list.items.map((i) => i.name).includes(item)
-        ) {
-          return {
-            ...list,
-            items: [...list.items, { name: item, count: 1 }],
-          };
-        }
-        return list;
-      });
+      console.log(id, name, item)
       mutation.mutate({
         id,
         name,
         item,
       });
-      return dataContext?.setData(data!);
+      return;
     }
     return toast.error("Item already exist in the shopping list", {
       position: "bottom-left",
@@ -100,7 +96,9 @@ const Home: NextPage<HomePageProps> = ({ datas }) => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Overlay isShowing={mutation.isLoading} />
+      <Overlay isActive={mutation.isLoading}>
+        <Spinner />
+      </Overlay>
 
       <div className="flex min-h-full flex-1 flex-col gap-12 bg-[#fafafe] px-16 py-8">
         <div className="flex w-full items-center gap-40">
@@ -131,11 +129,13 @@ const Home: NextPage<HomePageProps> = ({ datas }) => {
               <h3 className="text-2xl">{list?.name}</h3>
               <div className="flex flex-wrap items-center justify-center gap-5 space-x-3">
                 {list?.items?.length === 0 &&
-                  dataContext?.currentSideBar === "default" && (
+                  dataContext?.currentSideBarStatus === "default" && (
                     <h3 className="flex flex-col items-center justify-center gap-3">
                       <span>No items Found</span>
                       <button
-                        onClick={() => dataContext?.setCurrentSideBar("add")}
+                        onClick={() =>
+                          dataContext?.setCurrentSideBarStatus("add")
+                        }
                         className="w-fit rounded-xl bg-[#f9a109] px-4 py-2 text-white"
                       >
                         Add new Item
@@ -150,7 +150,7 @@ const Home: NextPage<HomePageProps> = ({ datas }) => {
                     {item.name}{" "}
                     <button
                       onClick={() =>
-                        addItemToShopingList(item.name, list?.name, list?.id)
+                        addItemToShoppingList(item.name, list?.name, list?.id)
                       }
                       title="add-item"
                     >
@@ -172,7 +172,7 @@ export default Home;
 
 export const getServerSideProps = async () => {
   const prisma = new PrismaClient();
-  const datas = await prisma.data.findMany();
+  const datas = await prisma.menuItemsList.findMany();
 
   return { props: { datas } };
 };

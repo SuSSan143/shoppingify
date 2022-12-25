@@ -1,13 +1,22 @@
 import { prisma } from "../src/server/db/client";
 import { ObjectId } from "bson";
-import { Item, SelectedItem } from "@prisma/client";
+import { type MenuItem, type ShoppingItem } from "@prisma/client";
 
 async function main() {
   const id = new ObjectId().toString();
-  const name = "Meat and Fish";
-  const items: Item[] = [];
+  const name = "Beverages";
+  const items: ShoppingItem[] = [
+    {
+      name: "Coffee",
+      count: 1,
+    },
+    {
+      name: "Tea",
+      count: 1,
+    },
+  ];
 
-  await prisma.data.upsert({
+  await prisma.shoppingItemsList.upsert({
     where: {
       id,
     },

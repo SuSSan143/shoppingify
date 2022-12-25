@@ -3,13 +3,13 @@ import Spinner from "./Spinner";
 
 type OverlayProps = {
   children?: React.ReactNode;
-  isShowing: boolean;
+  isActive: boolean;
 };
 
-const Overlay = ({ isShowing }: OverlayProps) => {
-  return isShowing ? (
+const Overlay = ({ isActive, children }: OverlayProps) => {
+  return isActive ? (
     <div className="absolute z-[10000] flex min-h-screen w-full items-center justify-center backdrop-blur-sm">
-      <Spinner />
+      <Spinner/>
     </div>
   ) : null;
 };
